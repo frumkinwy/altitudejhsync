@@ -23,22 +23,26 @@ namespace ShopifyConnector
             out int successCount, 
             out int errorCount)
         {
+            // Get products from shopify
             IList<Product> products = Api.GetProducts();
             IDictionary<string, Variant> variants = products
                 .SelectMany(x => x.Variants)
                 .ToDictionary(x => x.Sku, x => x);
 
+            // initialise counters and their locks
             int localSuccessCount = 0;
             object successLock = new Object();
             int localErrorCount = 0;
             object errorLock = new Object();
 
+            // open input spreadsheet
             FileStream file = File.OpenRead(xslxFile);
             var package = new ExcelPackage(file);
 
             ExcelWorksheet sheet = package.Workbook.Worksheets.First();
             var rows = sheet.Cells["d:d"];
 
+            // issue requests concurrently as async task
             IList<Task> tasks = new List<Task>();
             foreach (var qtyCell in rows)
             {
@@ -55,6 +59,8 @@ namespace ShopifyConnector
                 }));
             }
 
+            Task.WaitAll(tasks.ToArray());
+
             successCount = localSuccessCount;
             errorCount = localErrorCount;
 
@@ -68,6 +74,8 @@ namespace ShopifyConnector
             int qty;
             int sku;
             ExcelRangeBase skuCell = qtyCell.Offset(0, 2);
+
+            // make sure the row is valid
             if (qtyCell == null ||
                 qtyCell.Value == null ||
                 !int.TryParse(qtyCell.Value.ToString(), out qty) ||
@@ -80,9 +88,18 @@ namespace ShopifyConnector
 
             try
             {
+                // update variant
                 var variant = variants[sku.ToString()];
-                variant.InventoryQuantity = qty;
+                if (variant.InventoryQuantity == qty)
+                {
+                    return; // Only update if different
+                }
+                else
+                {
+                    variant.InventoryQuantity = qty;
+                }
 
+                // make update call to shopify
                 Api.SetVariant(variant);
                 lock (successLock)
                 {
@@ -101,7 +118,7 @@ namespace ShopifyConnector
                     localErrorCount++;
                 }
             }
-            catch (KeyNotFoundException) // Thrown by single()
+            catch (KeyNotFoundException)
             {
                 Console.WriteLine("Variant not found: " + sku);
                 lock (errorLock)
