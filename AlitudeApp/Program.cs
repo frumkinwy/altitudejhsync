@@ -16,7 +16,7 @@ namespace AlitudeApp
         static void Main(string[] args)
         {
             //specify file
-            string csvFile = "testinput.csv";// args[0];
+            string csvFile = "WEBEXPORT.xlsx";// args[0];
 
             // this is my test store using a private api key
             // it is yet to be tested using the public app interface as more code will need to be added
@@ -26,7 +26,9 @@ namespace AlitudeApp
                 "7d2c8f2110f9bf2e160a5cc3f5632bce");
             var api = new ApiWrapper(config);
 
-            CsvToShopify.UpdateInventoryQuantities(csvFile, api);
+            var updater = new InventoryUpdater(api);
+            int successCount, errorCount;
+            updater.UpdateInventoryQuantities(csvFile, out successCount, out errorCount, 10);
         }
     }
 }

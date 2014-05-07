@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EPPlus">
+      <HintPath>..\packages\EPPlus.3.1.3.3\lib\net35\EPPlus.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -46,11 +49,11 @@
   <ItemGroup>
     <Compile Include="ApiWrapper.cs" />
     <Compile Include="IApiConfiguration.cs" />
+    <Compile Include="InventoryUpdater.cs" />
     <Compile Include="Model\Product.cs" />
     <Compile Include="Model\ProductsDto.cs" />
     <Compile Include="Model\Variant.cs" />
     <Compile Include="Model\VarientDto.cs" />
-    <Compile Include="PublicApiConfiguration.cs" />
     <Compile Include="PrivateApiConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ShopifyApiException.cs" />
