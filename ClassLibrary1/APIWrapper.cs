@@ -23,7 +23,24 @@ namespace ShopifyConnector
 
         public IList<Product> GetProducts()
         {
-            var request = Configuration.CreateRequest(ApiResources.Products, HttpMethod.Get);
+            var products = new List<Product>();
+
+            IList<Product> pageProducts;
+            int page = 1;
+            do
+            {
+                pageProducts = GetProducts(page);
+                products.AddRange(pageProducts);
+                page++;
+            } while (pageProducts.Count > 0);
+
+            return products;
+        }
+
+        private IList<Product> GetProducts(int page)
+        {
+            string uri = string.Format(ApiResources.Products, page);
+            var request = Configuration.CreateRequest(uri, HttpMethod.Get);
 
             WebResponse response;
             try
@@ -67,7 +84,7 @@ namespace ShopifyConnector
 
     internal static class ApiResources
     {
-        public const string Products = "products.json";
+        public const string Products = "products.json?limit=250&page={0}";
         public const string Variant = "variants/{0}.json";
     }
 }
