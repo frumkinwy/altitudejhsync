@@ -17,9 +17,9 @@ namespace AlitudeApp
         {
             IList<Product> products = api.GetProducts();
 
-            Int32 successCount = 0;
+            int successCount = 0;
             object successLock = new Object();
-            Int32 errorCount = 0;
+            int errorCount = 0;
             object errorLock = new Object();
 
             CsvReader csv = new CsvReader(File.OpenText(csvFile));
@@ -28,16 +28,16 @@ namespace AlitudeApp
             Parallel.ForEach(
                 csv.GetRecords<InputRow>(),
                 new ParallelOptions() { MaxDegreeOfParallelism = 10 },
-                row =>
+                delegate(InputRow row)
                 {
-                    var variant = products
-                        .SelectMany(x => x.Variants)
-                        .Where(x => x.Sku == row.Sku)
-                        .Single();
-                    variant.InventoryQuantity = row.Quantity;
-
                     try
                     {
+                        var variant = products
+                            .SelectMany(x => x.Variants)
+                            .Where(x => x.Sku == row.Sku)
+                            .Single();
+                        variant.InventoryQuantity = row.Quantity;
+
                         api.SetVariant(variant);
                         lock (successLock)
                         {
@@ -48,6 +48,14 @@ namespace AlitudeApp
                     catch (ShopifyApiException ex)
                     {
                         Console.WriteLine("Error updating variant (" + row.Sku + "):" + ex.Message);
+                        lock (errorLock)
+                        {
+                            errorCount++;
+                        }
+                    }
+                    catch (InvalidOperationException) // Thrown by single()
+                    {
+                        Console.WriteLine("Variant not found (" + row.Sku + "):");
                         lock (errorLock)
                         {
                             errorCount++;
