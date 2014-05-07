@@ -28,7 +28,7 @@ namespace AlitudeApp
 
             var updater = new InventoryUpdater(api);
             int successCount, errorCount;
-            updater.UpdateInventoryQuantities(csvFile, out successCount, out errorCount, 10);
+            updater.UpdateInventoryQuantities(csvFile, out successCount, out errorCount);
         }
     }
 }

@@ -36,8 +36,8 @@ namespace ShopifyConnector
             }
 
             var reader = new StreamReader(response.GetResponseStream());
-
-            var productsDto = JsonConvert.DeserializeObject<ProductsDto>(reader.ReadToEnd());
+            string json = reader.ReadToEnd();
+            var productsDto = JsonConvert.DeserializeObject<ProductsDto>(json);
 
             return productsDto.Products;
             
@@ -45,20 +45,20 @@ namespace ShopifyConnector
 
         public void SetVariant(Variant variant)
         {
-            string uri = string.Format(ApiResources.Variant, variant.ID);
-            var request = Configuration.CreateRequest(uri, HttpMethod.Put);
-
-            var writer = new StreamWriter(request.GetRequestStream());
-            string json = JsonConvert.SerializeObject(new VarientDto() { Variant = variant });
-            writer.Write(json);
-            writer.Close();
-
-            WebResponse response;
             try
             {
+                string uri = string.Format(ApiResources.Variant, variant.ID);
+                var request = Configuration.CreateRequest(uri, HttpMethod.Put);
+
+                var writer = new StreamWriter(request.GetRequestStream());
+                string json = JsonConvert.SerializeObject(new VarientDto() { Variant = variant });
+                writer.Write(json);
+                writer.Close();
+
+                WebResponse response;
                 response = request.GetResponse();
             }
-            catch (HttpRequestException ex)
+            catch (WebException ex)
             {
                 throw new ShopifyApiException("Unable to set product variant", ex);
             }

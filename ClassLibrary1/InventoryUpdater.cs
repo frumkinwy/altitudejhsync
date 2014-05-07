@@ -21,8 +21,7 @@ namespace ShopifyConnector
         public void UpdateInventoryQuantities(
             string xslxFile, 
             out int successCount, 
-            out int errorCount,
-            int concurrentRequests = 5)
+            out int errorCount)
         {
             IList<Product> products = Api.GetProducts();
             IDictionary<string, Variant> variants = products
@@ -39,53 +38,22 @@ namespace ShopifyConnector
 
             ExcelWorksheet sheet = package.Workbook.Worksheets.First();
             var rows = sheet.Cells["d:d"];
-             
-            Parallel.ForEach(
-                rows,
-                new ParallelOptions() { MaxDegreeOfParallelism = concurrentRequests },
-                qtyCell =>
+
+            IList<Task> tasks = new List<Task>();
+            foreach (var qtyCell in rows)
+            {
+                Task.Delay(500); // only issue 2 requests per second as per shopify limits
+                tasks.Add(Task.Run(delegate
                 {
-                    int qty;
-                    int sku;
-                    ExcelRangeBase skuCell = qtyCell.Offset(0, 2);
-                    if (qtyCell == null ||
-                        qtyCell.Value == null ||
-                        !int.TryParse(qtyCell.Value.ToString(), out qty) ||
-                        skuCell == null ||
-                        skuCell.Value == null ||
-                        !int.TryParse(skuCell.Value.ToString(), out sku))
-                    {
-                        return;
-                    }
-
-                    try
-                    {
-                        var variant = variants[sku.ToString()];
-                        variant.InventoryQuantity = qty;
-
-                        Api.SetVariant(variant);
-                        lock (successLock)
-                        {
-                            localSuccessCount++;
-                        }
-                    }
-                    catch (ShopifyApiException ex)
-                    {
-                        Console.WriteLine("Error updating variant (" + sku + "):" + ex.Message);
-                        lock (errorLock)
-                        {
-                            localErrorCount++;
-                        }
-                    }
-                    catch (KeyNotFoundException) // Thrown by single()
-                    {
-                        Console.WriteLine("Variant not found: " + sku);
-                        lock (errorLock)
-                        {
-                            localErrorCount++;
-                        }
-                    }
-                });
+                    UpdateVariant(
+                        variants,
+                        ref localSuccessCount,
+                        successLock,
+                        ref localErrorCount,
+                        errorLock,
+                        qtyCell);
+                }));
+            }
 
             successCount = localSuccessCount;
             errorCount = localErrorCount;
@@ -93,6 +61,55 @@ namespace ShopifyConnector
             Console.WriteLine("Successes: " + successCount);
             Console.WriteLine("Errors: " + errorCount);
             Console.ReadKey();
+        }
+
+        private void UpdateVariant(IDictionary<string, Variant> variants, ref int localSuccessCount, object successLock, ref int localErrorCount, object errorLock, ExcelRangeBase qtyCell)
+        {
+            int qty;
+            int sku;
+            ExcelRangeBase skuCell = qtyCell.Offset(0, 2);
+            if (qtyCell == null ||
+                qtyCell.Value == null ||
+                !int.TryParse(qtyCell.Value.ToString(), out qty) ||
+                skuCell == null ||
+                skuCell.Value == null ||
+                !int.TryParse(skuCell.Value.ToString(), out sku))
+            {
+                return;
+            }
+
+            try
+            {
+                var variant = variants[sku.ToString()];
+                variant.InventoryQuantity = qty;
+
+                Api.SetVariant(variant);
+                lock (successLock)
+                {
+                    localSuccessCount++;
+                    File.AppendAllText("out.txt", "Updated " + sku + Environment.NewLine);
+                }
+                Console.Write("Updated " + sku + Environment.NewLine);
+            }
+            catch (ShopifyApiException ex)
+            {
+                Console.WriteLine("Error updating variant (" + sku + "):" + ex.Message);
+                lock (errorLock)
+                {
+                    File.AppendAllText("err.txt",
+                        "Error updating variant (" + sku + "):" + ex.ToString() + Environment.NewLine);
+                    localErrorCount++;
+                }
+            }
+            catch (KeyNotFoundException) // Thrown by single()
+            {
+                Console.WriteLine("Variant not found: " + sku);
+                lock (errorLock)
+                {
+                    File.AppendAllText("err.txt", "Variant not found: " + sku + Environment.NewLine);
+                    localErrorCount++;
+                }
+            }
         }
     }
 }
