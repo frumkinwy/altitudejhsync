@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace ShopifyConnector
 {
+    // This is not tested in any way, it will 99% not work
     public class PublicApiConfiguration : IApiConfiguration
     {
         public string BaseUrl { get; private set; }
@@ -29,7 +30,7 @@ namespace ShopifyConnector
             request.Method = httpMethod.Method;
             request.ContentType = "application/json; charset=utf-8";
 
-            byte[] passwordBytes = Encoding.ASCII.GetBytes(Secret + Secret); //this is how php does it
+            byte[] passwordBytes = Encoding.ASCII.GetBytes(Secret + Secret); //this is how api php does it
             string passwordMD5;
             using (var md5 = MD5.Create())
             {
