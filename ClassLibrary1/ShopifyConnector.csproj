@@ -57,6 +57,7 @@
     <Compile Include="PrivateApiConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ShopifyApiException.cs" />
+    <Compile Include="XlsxRow.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

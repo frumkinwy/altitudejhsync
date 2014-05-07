@@ -19,7 +19,7 @@ namespace ShopifyConnector
         }
 
         public void UpdateInventoryQuantities(
-            string xslxFile, 
+            string xlsxFile, 
             out int successCount, 
             out int errorCount)
         {
@@ -31,10 +31,7 @@ namespace ShopifyConnector
             Console.WriteLine("Variant Count: " + variants.Count());
 
             // load update data from spreadsheet
-            FileStream file = File.OpenRead(xslxFile);
-            var package = new ExcelPackage(file);
-            ExcelWorksheet sheet = package.Workbook.Worksheets.First();
-            var updateValues = ExtractValuesFromRange(sheet.Cells["d:d"]);
+            var updateValues = XlsxRow.LoadFromFile(xlsxFile);
 
             Console.WriteLine("Update Rows Count: " + updateValues.Count());
 
@@ -42,7 +39,7 @@ namespace ShopifyConnector
             var updates = from va in variants
                           join ud in updateValues
                           on va.Sku.Trim() equals ud.Sku.Trim()
-                          where va.InventoryQuantity != ud.Quantity // only update if qty has changed
+                          //where va.InventoryQuantity != ud.Quantity // only update if qty has changed
                           select new
                           {
                               Variant = va,
@@ -83,33 +80,6 @@ namespace ShopifyConnector
             Console.WriteLine("Successes: " + successCount);
             Console.WriteLine("Errors: " + errorCount);
             Console.ReadKey();
-        }
-
-        private static IEnumerable<CsvRecord> ExtractValuesFromRange(ExcelRangeBase rows)
-        {
-            foreach (var qtyCell in rows)
-            {
-                ExcelRangeBase skuCell = qtyCell.Offset(0, 2);
-
-                // make sure the row is valid
-                if (qtyCell != null &&
-                    qtyCell.Value != null &&
-                    qtyCell.Value.ToString().All(x => Char.IsDigit(x)) && // a string of digits
-                    skuCell != null &&
-                    skuCell.Value != null &&
-                    skuCell.Value.ToString().All(x => Char.IsDigit(x))) // a string of digits
-                {
-                    int qty = int.Parse(qtyCell.Value.ToString());
-                    string sku = skuCell.Value.ToString();
-                    yield return new CsvRecord() { Sku = sku, Quantity = qty };
-                }
-            }
-        }
-
-        private class CsvRecord
-        {
-            public string Sku { get; set; }
-            public int Quantity { get; set; }
         }
 
         private void UpdateVariant(
