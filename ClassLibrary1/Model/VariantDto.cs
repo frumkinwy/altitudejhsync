@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ShopifyConnector.Model
 {
-    class VarientDto
+    class VariantDto
     {
         [JsonProperty("variant")]
         public Variant Variant { get; set; }

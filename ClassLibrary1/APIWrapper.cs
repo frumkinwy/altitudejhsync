@@ -68,7 +68,7 @@ namespace ShopifyConnector
                 var request = Configuration.CreateRequest(uri, HttpMethod.Put);
 
                 var writer = new StreamWriter(request.GetRequestStream());
-                string json = JsonConvert.SerializeObject(new VarientDto() { Variant = variant });
+                string json = JsonConvert.SerializeObject(new VariantDto() { Variant = variant });
                 writer.Write(json);
                 writer.Close();
 
