@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ShopifyConnector
@@ -54,11 +55,14 @@ namespace ShopifyConnector
             int localErrorCount = 0;
             object errorLock = new Object();
 
+            File.AppendAllText("out.txt", "#Started " + DateTime.Now + Environment.NewLine);
+            File.AppendAllText("err.txt", "#Started " + DateTime.Now + Environment.NewLine);
+
             // issue requests concurrently as async task
             IList<Task> tasks = new List<Task>();
             foreach (var update in updates)
             {
-                Task.Delay(500); // only issue 2 requests per second as per shopify API limits
+                Thread.Sleep(500); // only issue 2 requests per second as per shopify API limits
                 tasks.Add(Task.Run(delegate
                 {
                     update.Variant.InventoryQuantity = update.UpdateValues.Quantity;
