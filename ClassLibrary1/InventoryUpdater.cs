@@ -111,15 +111,6 @@ namespace ShopifyConnector
                     localErrorCount++;
                 }
             }
-            catch (KeyNotFoundException)
-            {
-                Console.WriteLine("Variant not found: " + variant.Sku);
-                lock (errorLock)
-                {
-                    File.AppendAllText("err.txt", "Variant not found: " + variant.Sku + Environment.NewLine);
-                    localErrorCount++;
-                }
-            }
         }
     }
 }
