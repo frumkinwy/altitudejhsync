@@ -39,7 +39,7 @@ namespace ShopifyConnector
             var updates = from va in variants
                           join ud in updateValues
                           on va.Sku.Trim() equals ud.Sku.Trim()
-                          //where va.InventoryQuantity != ud.Quantity // only update if qty has changed
+                          where va.InventoryQuantity != ud.Quantity // only update if qty has changed
                           select new
                           {
                               Variant = va,
@@ -91,7 +91,6 @@ namespace ShopifyConnector
         {
             try
             {
-
                 // make update call to shopify
                 Api.SetVariant(variant);
                 lock (successLock)
