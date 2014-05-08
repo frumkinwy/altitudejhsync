@@ -54,6 +54,7 @@ namespace ShopifyConnector
 
             var reader = new StreamReader(response.GetResponseStream());
             string json = reader.ReadToEnd();
+            response.Close();
             var productsDto = JsonConvert.DeserializeObject<ProductsDto>(json);
 
             return productsDto.Products;
@@ -74,6 +75,7 @@ namespace ShopifyConnector
 
                 WebResponse response;
                 response = request.GetResponse();
+                response.Close();
             }
             catch (WebException ex)
             {
