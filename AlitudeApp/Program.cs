@@ -16,7 +16,7 @@ namespace AlitudeApp
         static void Main(string[] args)
         {
             //specify file
-            string csvFile = "WEBEXPORT.xlsx";// args[0];
+            string csvFile = args[0];
 
             var settings = Properties.Settings.Default;
             var config = new PrivateApiConfiguration(
