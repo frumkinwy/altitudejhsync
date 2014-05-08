@@ -20,5 +20,8 @@ namespace ShopifyConnector.Model
 
         [JsonProperty("old_inventory_quantity")]
         public int OldInventoryQuantity { get; set; }
+
+        [JsonProperty("inventory_management")]
+        public string InventoryManagement { get; set; }
     }
 }
