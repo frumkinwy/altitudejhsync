@@ -37,17 +37,30 @@ namespace ShopifyConnector
             Console.WriteLine("Update Rows Count: " + updateValues.Count());
 
             // join existing products with update values on SKU
-            var updates = from va in variants
-                          join ud in updateValues
-                          on va.Sku.Trim() equals ud.Sku.Trim()
-                          where va.InventoryQuantity != ud.Quantity // only update if qty has changed
-                          select new
-                          {
-                              Variant = va,
-                              UpdateValues = ud
-                          };
+            var joined = from va in variants
+                         join ud in updateValues
+                         on va.Sku.Trim() equals ud.Sku.Trim()
+                         select new
+                         {
+                             Variant = va,
+                             UpdateValues = ud
+                         };
+            
 
-            Console.WriteLine("Joined Updates: " + updates.Count());
+            var unjoined = variants.Except(joined.Select(x => x.Variant));
+            File.AppendAllText("unjoined.txt", "#Started " + DateTime.Now + Environment.NewLine);
+            foreach (var variant in unjoined)
+            {
+                File.AppendAllText("unmatchedskus.txt", variant.Sku + Environment.NewLine);
+            }
+
+            Console.WriteLine("Joined: " + joined.Count());
+            Console.WriteLine("Unjoined: " + unjoined.Count());
+
+            // only update if qty has changed
+            var updates = joined.Where(x => x.UpdateValues.Quantity != x.Variant.InventoryQuantity);
+
+            Console.WriteLine("Updates: " + updates.Count());
 
             // initialise counters and their locks
             int localSuccessCount = 0;
@@ -83,6 +96,7 @@ namespace ShopifyConnector
 
             Console.WriteLine("Successes: " + successCount);
             Console.WriteLine("Errors: " + errorCount);
+            Console.WriteLine("Press a key to exit");
             Console.ReadKey();
         }
 
